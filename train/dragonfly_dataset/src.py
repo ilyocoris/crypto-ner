@@ -39,7 +39,7 @@ class DragonflyDataset(Dataset):
         processed_chunks = []
         self.dataset["text"] = []
         self.dataset["ner_matches"] = []
-        for event in tqdm.tqdm(self.db.events.find({})[:10]):
+        for event in tqdm.tqdm(self.db.events.find({})):
             # chunks refer to paragraphs or sentences of text
             chunk_id = event["metadata"]["chunk_id"]
             if chunk_id not in processed_chunks:
@@ -57,7 +57,7 @@ class DragonflyDataset(Dataset):
                         "span": ner_results[symbol]["span"]
                     })
                 self.dataset["text"].append(text)
-        self.dataset["ner_matches"].append(ner_matches)
+                self.dataset["ner_matches"].append(ner_matches)
 
     def _tokenize_raw_text(self):
         self.dataset["inputs"] = self.tokenizer(
@@ -85,14 +85,12 @@ class DragonflyDataset(Dataset):
                             tag = "I-CRYPTO"
                         elif offset[0] > match["span"][0] and offset[1] <= match["span"][1]:
                             tag = "CRYPTO"
-                        else:
-                            tag = "O"
                 tags.append(tag)
             self.dataset["tags"].append(tags)
-        # tag2id = {
-        #     "O": 0,
-        #     "I-CRYPTO": 1,
-        #     "CRYPTO": 2
-        # }
-        # self.dataset["encoded_tags"] = [
-        #     tag2id[x] for x in self.dataset["tags"]]
+        tag2id = {
+            "O": 0,
+            "I-CRYPTO": 1,
+            "CRYPTO": 2
+        }
+        self.dataset["encoded_tags"] = [
+            [tag2id[x] for x in tag_tokens] for tag_tokens in self.dataset["tags"]]
